@@ -1,12 +1,13 @@
 // src/components/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { HiPlus, HiUsers, HiChat, HiX } from 'react-icons/hi';
 import { ref, query, orderByChild, equalTo, get } from 'firebase/database';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore, type Contact } from '../store/chatStore';
 import { addContact, createPrivateChat, loadUserContacts } from '../services/chatService';
 import { database } from '../config/firebase';
+import Avatar from './Avatar';
 
 const Sidebar: React.FC = () => {
   const [showAddContact, setShowAddContact] = useState(false);
@@ -15,6 +16,8 @@ const Sidebar: React.FC = () => {
   const [error, setError] = useState('');
   
   const location = useLocation();
+  const navigate = useNavigate();
+  const { chatId: currentChatId } = useParams<{ chatId: string }>();
   const { user } = useAuthStore();
   const { contacts, addContact: addContactToStore, setContacts } = useChatStore();
 
@@ -26,7 +29,9 @@ const Sidebar: React.FC = () => {
       setContacts(loadedContacts);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, [user, setContacts]);
 
   const handleAddContact = async (e: React.FormEvent) => {
@@ -37,14 +42,15 @@ const Sidebar: React.FC = () => {
     setError('');
 
     try {
-      const contact = await addContact(user.uid, contactEmail);
-      if (contact) {
-        addContactToStore(contact);
+      const newContact = await addContact(user.uid, contactEmail);
+      if (newContact) {
+        addContactToStore(newContact);
         setContactEmail('');
         setShowAddContact(false);
       }
-    } catch (error: any) {
-      setError(error.message || 'Error al agregar contacto');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al agregar contacto';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -64,11 +70,14 @@ const Sidebar: React.FC = () => {
         const contactUid = contactData[0]; // La clave es el UID
         
         const chatId = await createPrivateChat(user.uid, contactUid);
-        window.location.href = `/chat/${chatId}`;
+        
+        // Solo navegar si no estamos ya en este chat
+        if (currentChatId !== chatId) {
+          navigate(`/chat/${chatId}`);
+        }
+      }      } catch {
+        // Error silenciado - manejar error de creación de chat privado
       }
-    } catch (error) {
-      console.error('Error creating private chat:', error);
-    }
   };
 
   const isActive = (path: string) => {
@@ -82,12 +91,14 @@ const Sidebar: React.FC = () => {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
-            <button
-              className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              onClick={() => setShowAddContact(true)}
-            >
-              <HiPlus className="h-4 w-4" />
-            </button>
+            <div className="flex space-x-2">
+              <button
+                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                onClick={() => setShowAddContact(true)}
+              >
+                <HiPlus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -127,28 +138,45 @@ const Sidebar: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {contacts.map((contact) => (
-                  <button
-                    key={contact.id}
-                    onClick={() => handleStartPrivateChat(contact)}
-                    className="w-full flex items-center p-3 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <img
-                      src={contact.photoURL || 'https://via.placeholder.com/32'}
-                      alt={contact.displayName}
-                      className="w-8 h-8 rounded-full object-cover mr-3"
-                    />
-                    <div className="flex-1 text-left">
-                      <div className="font-medium text-gray-900">
-                        {contact.displayName}
+                {contacts.map((contact) => {
+                  // Crear el ID del chat privado para verificar si está activo
+                  const userIds = [user?.uid, contact.id].filter(Boolean) as string[];
+                  const sortedIds = [...userIds].sort((a: string, b: string) => a.localeCompare(b));
+                  const privateChatId = `private_${sortedIds.join('_')}`;
+                  const isActiveChat = currentChatId === privateChatId;
+                  
+                  return (
+                    <button
+                      key={contact.id}
+                      onClick={() => handleStartPrivateChat(contact)}
+                      className={`w-full flex items-center p-3 rounded-lg transition-colors ${
+                        isActiveChat 
+                          ? 'bg-blue-50 border-l-4 border-blue-500' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <Avatar
+                        src={contact.photoURL}
+                        alt={contact.displayName}
+                        size="md"
+                        className="mr-3"
+                      />
+                      <div className="flex-1 text-left">
+                        <div className={`font-medium ${
+                          isActiveChat ? 'text-blue-900' : 'text-gray-900'
+                        }`}>
+                          {contact.displayName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {contact.isOnline ? 'En línea' : 'Desconectado'}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {contact.isOnline ? 'En línea' : 'Desconectado'}
-                      </div>
-                    </div>
-                    <HiChat className="h-4 w-4 text-gray-400" />
-                  </button>
-                ))}
+                      <HiChat className={`h-4 w-4 ${
+                        isActiveChat ? 'text-blue-500' : 'text-gray-400'
+                      }`} />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -175,10 +203,11 @@ const Sidebar: React.FC = () => {
             {/* Modal Body */}
             <form onSubmit={handleAddContact} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
                   Correo electrónico
                 </label>
                 <input
+                  id="contact-email"
                   type="email"
                   placeholder="ejemplo@gmail.com"
                   value={contactEmail}

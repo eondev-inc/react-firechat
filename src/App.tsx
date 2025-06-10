@@ -6,32 +6,29 @@ import Chat from './components/Chat';
 import ChatLayout from './components/ChatLayout';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import PersistGate from './components/PersistGate';
+import LoadingScreen from './components/LoadingScreen';
 import { useAuthStore } from './store/authStore';
 import { initAuthListener } from './services/authService';
-import './utils/firebaseDebug'; // Import debug utilities
+import { useSessionStorageCleanup } from './hooks/useSessionStorageCleanup';
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  // Hook para limpiar sessionStorage cuando sea necesario
+  useSessionStorageCleanup();
 
   useEffect(() => {
     const unsubscribe = initAuthListener();
-    
-    // Enable debug utilities in development
-    if (import.meta.env.DEV) {
-      console.log('🐛 Firebase debug utilities available:');
-      console.log('   - debugFirebase(): Run complete Firebase test');
-      console.log('   - testFirebaseConnection(): Test connection');
-      console.log('   - testIndexes(): Test database indexes');
-    }
-    
     return () => unsubscribe();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="h-[calc(100vh-64px)]">
-        <Routes>
+    <PersistGate loading={<LoadingScreen />}>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pt-16 h-screen">
+          <Routes>
           <Route 
             path="/" 
             element={
@@ -75,6 +72,7 @@ function App() {
         </Routes>
       </main>
     </div>
+    </PersistGate>
   );
 }
 

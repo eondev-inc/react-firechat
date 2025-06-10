@@ -13,17 +13,35 @@ import { useAuthStore } from '../store/authStore';
 const saveUserProfile = async (user: User): Promise<void> => {
   try {
     const userRef = ref(database, `users/${user.uid}`);
-    await set(userRef, {
+    
+    // Check if user already exists to avoid overwriting contacts
+    const { get } = await import('firebase/database');
+    const existingUser = await get(userRef);
+    
+    const userData = {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName || user.email,
+      displayName: user.displayName ?? user.email,
       photoURL: user.photoURL,
       isOnline: true,
       lastSeen: serverTimestamp()
-    });
-  } catch (error) {
-    console.error('Error saving user profile:', error);
-    throw error;
+    };
+    
+    if (existingUser.exists()) {
+      // User exists, just update status
+      await set(userRef, {
+        ...existingUser.val(),
+        ...userData
+      });
+    } else {
+      // New user, create complete structure
+      await set(userRef, {
+        ...userData,
+        contacts: {} // Initialize empty contacts object
+      });
+    }
+  } catch {
+    throw new Error('Error al guardar el perfil de usuario');
   }
 };
 
@@ -33,9 +51,8 @@ export const signInWithGoogle = async (): Promise<User | null> => {
     // Save user profile to database
     await saveUserProfile(result.user);
     return result.user;
-  } catch (error) {
-    console.error('Error signing in with Google:', error);
-    throw error;
+  } catch {
+    throw new Error('Error al iniciar sesión con Google');
   }
 };
 
@@ -45,21 +62,23 @@ export const logout = async (): Promise<void> => {
     const user = auth.currentUser;
     if (user) {
       const userRef = ref(database, `users/${user.uid}`);
-      await set(userRef, {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email,
-        photoURL: user.photoURL,
+      // Usar update() en lugar de set() para preservar los contactos
+      const { update } = await import('firebase/database');
+      await update(userRef, {
         isOnline: false,
         lastSeen: serverTimestamp()
       });
     }
     
     await signOut(auth);
+    
+    // Limpiar sessionStorage
+    sessionStorage.removeItem('auth-storage');
+    sessionStorage.removeItem('chat-storage');
+    
     useAuthStore.getState().logout();
-  } catch (error) {
-    console.error('Error signing out:', error);
-    throw error;
+  } catch {
+    throw new Error('Error al cerrar sesión');
   }
 };
 

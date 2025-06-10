@@ -6,9 +6,11 @@
       ".indexOn": ["type", "lastActivity"],
       "$chatId": {
         "messages": {
+          ".read": "auth != null",
+          ".write": "auth != null",
           ".indexOn": ["timestamp", "senderId"],
           "$messageId": {
-            ".validate": "newData.hasChildren(['text', 'senderId', 'timestamp']) && newData.child('senderId').val() == auth.uid"
+            ".validate": "newData.hasChildren(['text', 'senderId', 'senderName', 'timestamp']) && newData.child('senderId').val() == auth.uid"
           }
         },
         "participants": {
