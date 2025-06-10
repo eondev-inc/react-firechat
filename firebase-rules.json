@@ -1,0 +1,64 @@
+{
+  "rules": {
+    "chats": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["type", "lastActivity"],
+      "$chatId": {
+        "messages": {
+          ".indexOn": ["timestamp", "senderId"],
+          "$messageId": {
+            ".validate": "newData.hasChildren(['text', 'senderId', 'timestamp']) && newData.child('senderId').val() == auth.uid"
+          }
+        },
+        "participants": {
+          ".read": "auth != null && (data.child(auth.uid).exists() || root.child('chats').child($chatId).child('type').val() == 'general')",
+          ".write": "auth != null && (data.child(auth.uid).exists() || root.child('chats').child($chatId).child('type').val() == 'general')",
+          ".indexOn": [".value"]
+        },
+        "typing": {
+          "$userId": {
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        }
+      }
+    },
+    "users": {
+      ".read": "auth != null",
+      ".indexOn": ["email", "displayName"],
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $userId",
+        ".validate": "newData.hasChildren(['uid', 'email', 'displayName']) && newData.child('email').val().matches(/.*@gmail\\.com$/)",
+        "contacts": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null && auth.uid == $userId",
+          ".indexOn": ["email", "displayName"],
+          "$contactId": {
+            ".validate": "newData.hasChildren(['id', 'email', 'displayName']) && newData.child('email').val().matches(/.*@gmail\\.com$/)"
+          }
+        }
+      }
+    },
+    "contacts": {
+      ".read": "auth != null",
+      ".indexOn": ["email"],
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId",
+        ".indexOn": ["email", "displayName"],
+        "$contactId": {
+          ".validate": "newData.hasChildren(['id', 'email', 'displayName']) && newData.child('email').val().matches(/.*@gmail\\.com$/)"
+        }
+      }
+    },
+    "invitations": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["email"],
+      "$invitationId": {
+        ".validate": "newData.hasChildren(['email', 'timestamp'])"
+      }
+    }
+  }
+}
