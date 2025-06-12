@@ -4,22 +4,33 @@ import { FaGoogle } from 'react-icons/fa';
 import { signInWithGoogle } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import LoadingScreen from './LoadingScreen';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const setUser = useAuthStore((state) => state.setUser);
+  const { setUser, setLoading, isLoading } = useAuthStore();
 
   const handleGoogleSignIn = async () => {
     try {
+      setLoading(true);
       const user = await signInWithGoogle();
       if (user) {
         setUser(user);
-        navigate('/chat/general');
+        // Simular un pequeño delay para mostrar la pantalla de carga
+        setTimeout(() => {
+          setLoading(false);
+          navigate('/chat/general');
+        }, 1500);
       }
-    } catch (error) {
-      console.error('Error al iniciar sesión:', error);
+    } catch {
+      setLoading(false);
     }
   };
+
+  // Mostrar pantalla de carga si está en proceso de login
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -56,10 +67,20 @@ const Login: React.FC = () => {
             
             <button
               onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FaGoogle className="mr-2" />
-              Iniciar sesión con Google
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Iniciando sesión...
+                </>
+              ) : (
+                <>
+                  <FaGoogle className="mr-2" />
+                  Iniciar sesión con Google
+                </>
+              )}
             </button>
             
             <div className="text-xs text-gray-400 text-center">

@@ -1,5 +1,6 @@
 // src/store/chatStore.ts
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface Contact {
   id: string;
@@ -50,70 +51,88 @@ interface ChatState {
   removeTypingUser: (chatId: string, userId: string) => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  contacts: [],
-  chats: [],
-  messages: {},
-  currentChatId: null,
-  typingUsers: {},
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
+      contacts: [],
+      chats: [],
+      messages: {},
+      currentChatId: null,
+      typingUsers: {},
 
-  addContact: (contact) => 
-    set((state) => ({ 
-      contacts: [...state.contacts, contact] 
-    })),
+      addContact: (contact) => {
+        set((state) => ({ 
+          contacts: [...state.contacts, contact] 
+        }));
+      },
 
-  removeContact: (contactId) =>
-    set((state) => ({
-      contacts: state.contacts.filter(c => c.id !== contactId)
-    })),
+      removeContact: (contactId) =>
+        set((state) => ({
+          contacts: state.contacts.filter(c => c.id !== contactId)
+        })),
 
-  setContacts: (contacts) => set({ contacts }),
+      setContacts: (contacts) => {
+        set({ contacts });
+      },
 
-  addMessage: (message) =>
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [message.chatId]: [...(state.messages[message.chatId] || []), message]
-      }
-    })),
+      addMessage: (message) =>
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [message.chatId]: [...(state.messages[message.chatId] || []), message]
+          }
+        })),
 
-  setMessages: (chatId, messages) =>
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [chatId]: messages
-      }
-    })),
+      setMessages: (chatId, messages) =>
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [chatId]: messages
+          }
+        })),
 
-  setCurrentChat: (chatId) => set({ currentChatId: chatId }),
+      setCurrentChat: (chatId) => set({ currentChatId: chatId }),
 
-  setTypingUsers: (chatId, users) =>
-    set((state) => ({
-      typingUsers: {
-        ...state.typingUsers,
-        [chatId]: users
-      }
-    })),
-
-  addTypingUser: (chatId, userId) =>
-    set((state) => {
-      const currentUsers = state.typingUsers[chatId] || [];
-      if (!currentUsers.includes(userId)) {
-        return {
+      setTypingUsers: (chatId, users) =>
+        set((state) => ({
           typingUsers: {
             ...state.typingUsers,
-            [chatId]: [...currentUsers, userId]
+            [chatId]: users
           }
-        };
-      }
-      return state;
-    }),
+        })),
 
-  removeTypingUser: (chatId, userId) =>
-    set((state) => ({
-      typingUsers: {
-        ...state.typingUsers,
-        [chatId]: (state.typingUsers[chatId] || []).filter(id => id !== userId)
-      }
-    })),
-}));
+      addTypingUser: (chatId, userId) =>
+        set((state) => {
+          const currentUsers = state.typingUsers[chatId] || [];
+          if (!currentUsers.includes(userId)) {
+            return {
+              typingUsers: {
+                ...state.typingUsers,
+                [chatId]: [...currentUsers, userId]
+              }
+            };
+          }
+          return state;
+        }),
+
+      removeTypingUser: (chatId, userId) =>
+        set((state) => ({
+          typingUsers: {
+            ...state.typingUsers,
+            [chatId]: (state.typingUsers[chatId] || []).filter(id => id !== userId)
+          }
+        })),
+    }),
+    {
+      name: 'chat-storage',
+      storage: createJSONStorage(() => sessionStorage),
+      // Solo persistir los datos principales, excluir typingUsers
+      partialize: (state) => ({
+        contacts: state.contacts,
+        chats: state.chats,
+        messages: state.messages,
+        currentChatId: state.currentChatId,
+      }),
+    }
+  )
+);
