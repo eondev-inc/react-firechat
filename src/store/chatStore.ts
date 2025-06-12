@@ -61,9 +61,16 @@ export const useChatStore = create<ChatState>()(
       typingUsers: {},
 
       addContact: (contact) => {
-        set((state) => ({ 
-          contacts: [...state.contacts, contact] 
-        }));
+        set((state) => {
+          // Verificar si el contacto ya existe para evitar duplicados
+          const exists = state.contacts.some(c => c.id === contact.id);
+          if (exists) {
+            return state; // No agregar si ya existe
+          }
+          return { 
+            contacts: [...state.contacts, contact] 
+          };
+        });
       },
 
       removeContact: (contactId) =>
