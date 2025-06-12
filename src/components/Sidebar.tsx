@@ -19,7 +19,7 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { chatId: currentChatId } = useParams<{ chatId: string }>();
   const { user } = useAuthStore();
-  const { contacts, addContact: addContactToStore, setContacts } = useChatStore();
+  const { contacts, setContacts } = useChatStore();
 
   // Cargar contactos cuando el usuario se autentica
   useEffect(() => {
@@ -44,7 +44,8 @@ const Sidebar: React.FC = () => {
     try {
       const newContact = await addContact(user.uid, contactEmail);
       if (newContact) {
-        addContactToStore(newContact);
+        // El listener de loadUserContacts se encargará de actualizar la lista automáticamente
+        // No necesitamos llamar a addContactToStore para evitar duplicación
         setContactEmail('');
         setShowAddContact(false);
       }
