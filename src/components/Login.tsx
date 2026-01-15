@@ -116,13 +116,19 @@ const Login: React.FC = () => {
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 dark:text-gray-400">
           Al continuar, aceptas nuestros{' '}
-          <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+          <button
+            type="button"
+            className="text-primary-600 dark:text-primary-400 hover:underline"
+          >
             términos de servicio
-          </a>{' '}
+          </button>{' '}
           y{' '}
-          <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
+          <button
+            type="button"
+            className="text-primary-600 dark:text-primary-400 hover:underline"
+          >
             política de privacidad
-          </a>
+          </button>
         </p>
       </div>
     </div>
