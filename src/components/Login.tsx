@@ -1,10 +1,12 @@
 // src/components/Login.tsx
 import React from 'react';
 import { FaGoogle } from 'react-icons/fa';
+import { HiChat, HiShieldCheck, HiLockClosed } from 'react-icons/hi';
 import { signInWithGoogle } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import LoadingScreen from './LoadingScreen';
+import ENV from '../config/environment';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -33,61 +35,101 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Bienvenido a nuestra aplicación de chat
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-200 dark:bg-secondary-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 animate-blob" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent-200 dark:bg-accent-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 animate-blob" style={{ animationDelay: '4s' }}></div>
+      </div>
+
+      <div className="relative max-w-md w-full space-y-8 animate-fade-in">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
+              <div className="relative bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl p-6 shadow-2xl transform group-hover:scale-105 transition-transform">
+                <HiChat className="w-16 h-16 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+              Firechat
+            </span>
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Conversaciones en tiempo real, seguras y modernas
           </p>
         </div>
-        
-        <div className="bg-white shadow-md rounded-lg p-6 max-w-sm mx-auto">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg 
-                className="w-10 h-10 text-blue-600" 
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-                <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
-              </svg>
-            </div>
-            
-            <h3 className="text-xl font-semibold text-gray-900">
-              Chat App
-            </h3>
-            
-            <p className="text-center text-gray-500">
-              Conecta con tus amigos y mantente en contacto
-            </p>
+
+        {/* Glassmorphism card */}
+        <div className="relative backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 shadow-2xl rounded-3xl p-8 border border-white/20 dark:border-gray-700/20">
+          <div className="flex flex-col items-center space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Iniciar Sesión
+            </h2>
             
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full group relative flex items-center justify-center px-6 py-4 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-95"
             >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Iniciando sesión...
-                </>
-              ) : (
-                <>
-                  <FaGoogle className="mr-2" />
-                  Iniciar sesión con Google
-                </>
-              )}
+              <FaGoogle className="mr-3 text-xl text-red-500" />
+              <span>Continuar con Google</span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/10 to-secondary-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
-            
-            <div className="text-xs text-gray-400 text-center">
-              Solo se permiten cuentas @gmail.com
+
+            {/* Features */}
+            <div className="w-full space-y-3 mt-4">
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                  <HiShieldCheck className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <span>Autenticación segura con Google</span>
+              </div>
+              
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex-shrink-0 w-8 h-8 bg-secondary-100 dark:bg-secondary-900/30 rounded-full flex items-center justify-center">
+                  <HiLockClosed className="w-5 h-5 text-secondary-600 dark:text-secondary-400" />
+                </div>
+                <span>Tus datos están protegidos</span>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="w-full pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                Solo se permiten cuentas <span className="font-semibold">@gmail.com</span>
+              </p>
+              {ENV.isDevelopment && (
+                <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
+                  🔧 Modo desarrollo
+                </p>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          Al continuar, aceptas nuestros{' '}
+          <button
+            type="button"
+            className="text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            términos de servicio
+          </button>{' '}
+          y{' '}
+          <button
+            type="button"
+            className="text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            política de privacidad
+          </button>
+        </p>
       </div>
     </div>
   );

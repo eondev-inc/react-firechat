@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.10",
+    "@types/dompurify": "^3.0.5",
     "autoprefixer": "^10.4.21",
+    "dompurify": "^3.3.1",
+    "emoji-picker-react": "^4.16.1",
     "firebase": "^11.9.0",
     "postcss": "^8.5.4",
     "react": "^19.1.0",

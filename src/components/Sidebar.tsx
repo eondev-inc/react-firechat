@@ -1,7 +1,7 @@
 // src/components/Sidebar.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { HiPlus, HiUsers, HiChat, HiX } from 'react-icons/hi';
+import { HiPlus, HiUsers, HiChat, HiX, HiSearch, HiUserAdd } from 'react-icons/hi';
 import { ref, query, orderByChild, equalTo, get } from 'firebase/database';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore, type Contact } from '../store/chatStore';
@@ -12,6 +12,7 @@ import Avatar from './Avatar';
 const Sidebar: React.FC = () => {
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -20,6 +21,17 @@ const Sidebar: React.FC = () => {
   const { chatId: currentChatId } = useParams<{ chatId: string }>();
   const { user } = useAuthStore();
   const { contacts, setContacts } = useChatStore();
+
+  // Filtrar contactos según búsqueda
+  const filteredContacts = useMemo(() => {
+    if (!searchQuery.trim()) return contacts;
+    
+    const query = searchQuery.toLowerCase();
+    return contacts.filter(contact => 
+      contact.displayName.toLowerCase().includes(query) ||
+      contact.email.toLowerCase().includes(query)
+    );
+  }, [contacts, searchQuery]);
 
   // Cargar contactos cuando el usuario se autentica
   useEffect(() => {
@@ -87,59 +99,110 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <div className="w-64 bg-white border-r h-full flex flex-col">
+      <div className="w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-full flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
-            <div className="flex space-x-2">
-              <button
-                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                onClick={() => setShowAddContact(true)}
-              >
-                <HiPlus className="h-4 w-4" />
-              </button>
-            </div>
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Chats</h2>
+            <button
+              onClick={() => setShowAddContact(true)}
+              className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white rounded-full transition-all transform hover:scale-110 shadow-lg"
+              title="Agregar contacto"
+            >
+              <HiUserAdd className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <HiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Buscar chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary-500 dark:focus:border-primary-400 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-all outline-none"
+            />
           </div>
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {/* General Chat */}
           <Link
             to="/chat/general"
-            className={`flex items-center p-4 hover:bg-gray-50 border-b ${
-              isActive('/chat/general') ? 'bg-blue-50 border-r-2 border-blue-500' : ''
-            }`}
+            className={`
+              flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-l-4
+              ${isActive('/chat/general') 
+                ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500' 
+                : 'border-transparent'
+              }
+            `}
           >
-            <div className="flex items-center space-x-3 w-full">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <HiUsers className="h-5 w-5 text-blue-600" />
+            <div className="relative flex-shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-lg">
+                <HiUsers className="h-6 w-6 text-white" />
               </div>
-              <div className="flex-1">              <div className="font-medium text-gray-900">Chat General</div>
-              <div className="text-sm text-gray-500">Canal público</div>
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-secondary-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
             </div>
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Online
-            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className={`font-semibold truncate ${
+                  isActive('/chat/general')
+                    ? 'text-primary-700 dark:text-primary-300'
+                    : 'text-gray-900 dark:text-white'
+                }`}>
+                  Chat General
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                Canal público para todos
+              </p>
             </div>
           </Link>
 
-          {/* Contacts */}
-          <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-              Contactos
-            </h3>
-            
-            {contacts.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                <HiUsers className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No tienes contactos</p>
-                <p className="text-xs">Agrega contactos para chatear</p>
+          {/* Section Divider */}
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Contactos {filteredContacts.length > 0 && `(${filteredContacts.length})`}
+              </h3>
+            </div>
+          </div>
+
+          {/* Contacts List */}
+          <div className="px-2">
+            {filteredContacts.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {searchQuery ? (
+                    <HiSearch className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  ) : (
+                    <HiUsers className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  )}
+                </div>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                  {searchQuery ? 'Sin resultados' : 'No tienes contactos'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  {searchQuery 
+                    ? 'Intenta con otro término de búsqueda'
+                    : 'Agrega contactos para empezar a chatear'
+                  }
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setShowAddContact(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <HiPlus className="h-4 w-4" />
+                    Agregar contacto
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="space-y-2">
-                {contacts.map((contact) => {
+              <div className="space-y-1 pb-4">
+                {filteredContacts.map((contact) => {
                   // Crear el ID del chat privado para verificar si está activo
                   const userIds = [user?.uid, contact.id].filter(Boolean) as string[];
                   const sortedIds = [...userIds].sort((a: string, b: string) => a.localeCompare(b));
@@ -150,30 +213,48 @@ const Sidebar: React.FC = () => {
                     <button
                       key={contact.id}
                       onClick={() => handleStartPrivateChat(contact)}
-                      className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-                        isActiveChat 
-                          ? 'bg-blue-50 border-l-4 border-blue-500' 
-                          : 'hover:bg-gray-50'
-                      }`}
+                      className={`
+                        w-full flex items-center gap-3 p-3 rounded-xl transition-all border-l-4
+                        ${isActiveChat 
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-500 shadow-sm' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 border-transparent'
+                        }
+                      `}
                     >
-                      <Avatar
-                        src={contact.photoURL}
-                        alt={contact.displayName}
-                        size="md"
-                        className="mr-3"
-                      />
-                      <div className="flex-1 text-left">
-                        <div className={`font-medium ${
-                          isActiveChat ? 'text-blue-900' : 'text-gray-900'
-                        }`}>
-                          {contact.displayName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {contact.isOnline ? 'En línea' : 'Desconectado'}
-                        </div>
+                      <div className="flex-shrink-0">
+                        <Avatar
+                          src={contact.photoURL}
+                          alt={contact.displayName}
+                          size="lg"
+                          showOnline
+                          isOnline={contact.isOnline}
+                        />
                       </div>
-                      <HiChat className={`h-4 w-4 ${
-                        isActiveChat ? 'text-blue-500' : 'text-gray-400'
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <h3 className={`font-semibold text-sm truncate ${
+                            isActiveChat 
+                              ? 'text-primary-700 dark:text-primary-300' 
+                              : 'text-gray-900 dark:text-white'
+                          }`}>
+                            {contact.displayName}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {contact.isOnline ? (
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-secondary-500 rounded-full"></span>
+                              En línea
+                            </span>
+                          ) : (
+                            'Desconectado'
+                          )}
+                        </p>
+                      </div>
+                      <HiChat className={`h-5 w-5 flex-shrink-0 ${
+                        isActiveChat 
+                          ? 'text-primary-500' 
+                          : 'text-gray-400 dark:text-gray-500'
                       }`} />
                     </button>
                   );
@@ -184,64 +265,93 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Contact Modal - Custom Implementation */}
+      {/* Add Contact Modal */}
       {showAddContact && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Agregar Contacto
-              </h3>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Agregar Contacto
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Ingresa el correo de tu contacto
+                </p>
+              </div>
               <button
-                onClick={() => setShowAddContact(false)}
-                className="text-gray-400 hover:text-gray-600"
+                onClick={() => {
+                  setShowAddContact(false);
+                  setError('');
+                  setContactEmail('');
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                <HiX className="h-5 w-5" />
+                <HiX className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleAddContact} className="space-y-4">
+            <form onSubmit={handleAddContact} className="p-6 space-y-4">
               <div>
-                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label 
+                  htmlFor="contact-email" 
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Correo electrónico
                 </label>
-                <input
-                  id="contact-email"
-                  type="email"
-                  placeholder="ejemplo@gmail.com"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
+                <div className="relative">
+                  <input
+                    id="contact-email"
+                    type="email"
+                    placeholder="ejemplo@gmail.com"
+                    value={contactEmail}
+                    onChange={(e) => {
+                      setContactEmail(e.target.value);
+                      setError('');
+                    }}
+                    required
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                  <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
                   Solo se permiten correos @gmail.com
                 </p>
               </div>
               
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-                  {error}
+                <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <span className="text-red-600 dark:text-red-400 text-sm">{error}</span>
                 </div>
               )}
 
               {/* Modal Footer */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddContact(false);
+                    setError('');
+                    setContactEmail('');
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
                   disabled={isLoading || !contactEmail.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg"
                 >
-                  {isLoading ? 'Agregando...' : 'Agregar Contacto'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddContact(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-                >
-                  Cancelar
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Agregando...
+                    </span>
+                  ) : (
+                    'Agregar'
+                  )}
                 </button>
               </div>
             </form>
