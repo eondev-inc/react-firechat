@@ -1,5 +1,6 @@
 // src/components/LoadingScreen.tsx
 import React, { useState, useEffect } from 'react';
+import { HiChat } from 'react-icons/hi';
 
 const loadingMessages = [
   "Iniciando sesión...",
@@ -11,42 +12,55 @@ const loadingMessages = [
 
 const LoadingScreen: React.FC = () => {
   const [currentMessage, setCurrentMessage] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const messageInterval = setInterval(() => {
       setCurrentMessage((prev) => (prev + 1) % loadingMessages.length);
     }, 800);
 
-    return () => clearInterval(interval);
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => (prev >= 95 ? 95 : prev + 5));
+    }, 100);
+
+    return () => {
+      clearInterval(messageInterval);
+      clearInterval(progressInterval);
+    };
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="text-center">
+        {/* Logo animado con efecto de resplandor */}
         <div className="mb-8">
-          {/* Animación del logo/icono */}
-          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <svg 
-              className="w-12 h-12 text-blue-600" 
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-              <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
-            </svg>
+          <div className="relative w-24 h-24 mx-auto">
+            {/* Anillos pulsantes */}
+            <div className="absolute inset-0 bg-primary-500 rounded-3xl animate-ping opacity-20"></div>
+            <div className="absolute inset-0 bg-secondary-500 rounded-3xl animate-pulse opacity-20" style={{ animationDelay: '0.5s' }}></div>
+            
+            {/* Logo principal */}
+            <div className="relative bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl flex items-center justify-center w-full h-full shadow-2xl animate-bounce-slow">
+              <HiChat className="w-12 h-12 text-white" />
+            </div>
           </div>
         </div>
 
-        {/* Spinner de carga */}
-        <div className="flex justify-center mb-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        {/* Progress bar */}
+        <div className="w-64 mx-auto mb-6">
+          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
 
         {/* Textos de carga dinámicos */}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2 h-8">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2 h-8 animate-fade-in">
           {loadingMessages[currentMessage]}
         </h2>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
           Por favor espera mientras configuramos todo para ti
         </p>
 
