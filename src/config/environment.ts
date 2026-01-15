@@ -2,7 +2,7 @@
 export const ENV = {
   isDevelopment: import.meta.env.MODE === 'development',
   isProduction: import.meta.env.MODE === 'production',
-  isSecure: window.location.protocol === 'https:',
+  isSecure: typeof window !== 'undefined' && window.location.protocol === 'https:',
   mode: import.meta.env.MODE,
 } as const;
 
