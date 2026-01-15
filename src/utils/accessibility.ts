@@ -22,7 +22,7 @@ export const announceToScreenReader = (message: string, priority: 'polite' | 'as
 
   // Remover después de que se haya leído
   setTimeout(() => {
-    document.body.removeChild(announcement);
+    announcement.remove();
   }, 1000);
 };
 
